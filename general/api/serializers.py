@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from general.models import User
+from general.models import User, Post
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
@@ -30,3 +30,41 @@ class UserListSerilizer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ("id", "first_name", "last_name")
+
+
+class NestedPostListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Post 
+        fields = (
+            "id",
+            "title",
+            "body",
+            "created_at",
+        )
+
+
+class UserRetrieveSerializer(serializers.ModelSerializer):
+    is_friend = serializers.SerializerMethodField()
+    friend_count = serializers.SerializerMethodField()
+    posts = NestedPostListSerializer(many=True)
+
+    class Meta:
+        model = User
+        fields = (
+            "id",
+            "first_name",
+            "last_name",
+            "email",
+            "is_friend",
+            "posts",
+            "friend_count",
+        )
+
+    def get_friend_count(self, obj) -> int:
+        return obj.friends.count()
+
+    def get_is_friend(self, obj) -> bool:
+        return obj in self.context["request"].user.friends.all()
+    
+
+    
