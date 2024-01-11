@@ -99,3 +99,37 @@ class PostListSerializer(serializers.ModelSerializer):
             return obj.body[:125] + "..."
         return obj.body
     
+
+class PostRetrieveSerializer(serializers.ModelSerializer):
+    author = UserShortSerializer()
+    my_reaction = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Post
+        fields = (
+            "id",
+            "author",
+            "title",
+            "body",
+            "my_reaction",
+            "created_at",
+        )
+
+    def get_my_reaction(self, obj) -> str:
+        reaction = self.context['request'].user.reactions.filter(post=obj).last()
+        return reaction.value if reaction else ""
+    
+
+class PostCreateUpdateSerializer(serializers.ModelSerializer):
+    author = serializers.HiddenField(
+        default=serializers.CurrentUserDefault(),
+    )
+
+    class Meta:
+        model = Post
+        fields = (
+            "id",
+            "author",
+            "title",
+            "body",
+        )
