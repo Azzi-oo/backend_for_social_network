@@ -27,9 +27,16 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     
 
 class UserListSerilizer(serializers.ModelSerializer):
+    is_friend = serializers.SerializerMethodField()
+
     class Meta:
         model = User
-        fields = ("id", "first_name", "last_name")
+        fields = ("id", "first_name", "last_name", "is_friend")
+
+    def get_is_friend(self, obj) -> bool:
+        current_user = self.context["request"].user
+        return current_user in obj.friends.all()
+    
 
 
 class NestedPostListSerializer(serializers.ModelSerializer):
@@ -67,4 +74,28 @@ class UserRetrieveSerializer(serializers.ModelSerializer):
         return obj in self.context["request"].user.friends.all()
     
 
+class UserShortSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ("id", "first_name", "last_name")
+    
+
+class PostListSerializer(serializers.ModelSerializer):
+    author = UserShortSerializer()
+    body = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Post
+        fields = (
+            "id",
+            "author",
+            "title",
+            "body",
+            "created_at",
+        )
+
+    def get_body(self, obj) -> str:
+        if len(obj.body) > 128:
+            return obj.body[:125] + "..."
+        return obj.body
     
