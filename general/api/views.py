@@ -1,12 +1,12 @@
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.mixins import CreateModelMixin, ListModelMixin, RetrieveModelMixin, DestroyModelMixin
-from general.api.serializers import UserRegistrationSerializer, UserListSerilizer, UserRetrieveSerializer, PostListSerializer, PostRetrieveSerializer, PostCreateUpdateSerializer, CommentSerializer
+from general.api.serializers import UserRegistrationSerializer, UserListSerilizer, UserRetrieveSerializer, PostListSerializer, PostRetrieveSerializer, PostCreateUpdateSerializer, CommentSerializer, ReactionSerializer, ChatSerializer
 from general.models import User, Post, Comment
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.decorators import action
 from django.http import HttpResponse
 from rest_framework.viewsets import ModelViewSet
-from django_filters import DjangoFilterBackend
+from django_filters.rest_framework import DjangoFilterBackend
 
 
 class UserViewSet(
@@ -115,3 +115,19 @@ class CommentViewSet(
         if instance.author != self.request.user:
             raise PermissionDenied("Вы не являетесь автором этого комментария")
         instance.delete()
+
+
+class ReactionViewSet(
+    CreateModelMixin,
+    GenericViewSet,
+):
+    permission_classes = [IsAuthenticated]
+    serializer_class = ReactionSerializer
+
+
+class ChatViewSet(
+    CreateModelMixin,
+    GenericViewSet,
+):
+    permission_classes = [IsAuthenticated]
+    serializer_class = ChatSerializer

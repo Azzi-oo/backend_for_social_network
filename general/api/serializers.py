@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from general.models import User, Post, Comment
+from general.models import User, Post, Comment, Reaction, Chat, Message
+from django.db.models import Q
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
@@ -155,3 +156,69 @@ class CommentSerializer(serializers.ModelSerializer):
             "body",
             "created_at",
         )
+
+
+class ReactionSerializer(serializers.ModelSerializer):
+    author = serializers.HiddenField(
+        default=serializers.CurrentUserDefault(),
+    )
+
+    class Meta:
+        model = Reaction 
+        fields = (
+            "id",
+            "author",
+            "post",
+            "value",
+        )
+
+    def create(self, validated_data):
+        reaction = Reaction.objects.filter(
+            post=validated_data["post"],
+            author=validated_data["author"],
+        ).last()
+
+        if not reaction:
+            return Reaction.objects.create(**validated_data)
+        
+        if reaction.value == validated_data["value"]:
+            reaction.value = None
+        else:
+            reaction.value = validated_data["value"]
+        reaction.save()
+
+        return reaction
+    
+
+class ChatSerializer(serializers.ModelSerializer):
+    user_1 = serializers.HiddenField(
+        default=serializers.CurrentUserDefault(),
+    )
+
+    class Meta:
+        model = Chat 
+        fields = ("user_1", "user_2")
+
+    def create(self, validated_data):
+        request_user = validated_data["user_1"]
+        second_user = validated_data["user_2"]
+
+        chat = Chat.objects.filter(
+            Q(user_1=request_user, user_2=second_user)
+            | Q(user_1=second_user, user_2=request_user)
+        ).first()
+        if not chat:
+            chat = Chat.objects.create(
+                user_1=request_user,
+                user_2=second_user,
+            )
+
+        return chat
+
+
+class MessageListSerializer(serializers.ModelSerializer):
+    message_author = serializers.CharField()
+
+    class Meta:
+        model = Message 
+        fields = ("id", "content", "message_author", "created_at")
