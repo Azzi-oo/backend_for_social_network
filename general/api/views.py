@@ -1,10 +1,12 @@
 from rest_framework.viewsets import GenericViewSet
-from rest_framework.mixins import CreateModelMixin, ListModelMixin, RetrieveModelMixin
-from general.api.serializers import UserRegistrationSerializer, UserListSerilizer, UserRetrieveSerializer
-from general.models import User
+from rest_framework.mixins import CreateModelMixin, ListModelMixin, RetrieveModelMixin, DestroyModelMixin
+from general.api.serializers import UserRegistrationSerializer, UserListSerilizer, UserRetrieveSerializer, PostListSerializer, PostRetrieveSerializer, PostCreateUpdateSerializer, CommentSerializer
+from general.models import User, Post, Comment
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.decorators import action
 from django.http import HttpResponse
+from rest_framework.viewsets import ModelViewSet
+from django_filters import DjangoFilterBackend
 
 
 class UserViewSet(
@@ -72,4 +74,44 @@ class UserViewSet(
         request.user.friends.remove(user)
         return Response("Friend removed")
     
+
+class PostViewSet(ModelViewSet):
+    queryset = Post.objects.all().order_by("-id")
+    permission_classes = [IsAuthenticated]
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return PostListSerializer
+        elif self.action == "retrieve":
+            return PostRetrieveSerializer
+        return PostCreateUpdateSerializer
     
+    def perform_update(self, serializer):
+        instance = self.get_object()
+
+        if instance.author != self.request.user:
+            raise PermissionDenied("Вы не являетесь автором этого поста")
+        serializer.save()
+    
+    def perform_destroy(self, instance):
+        if instance.author != self.request.user:
+            raise PermissionDenied("Вы не являетесь автором этого поста")
+        instance.delete()
+
+
+class CommentViewSet(
+    CreateModelMixin,
+    DestroyModelMixin,
+    ListModelMixin,
+    GenericViewSet,
+):
+    queryset = Comment.objects.all().order_by("-id")
+    permission_classes = [IsAuthenticated]
+    serializer_class = CommentSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ["post__id"]
+
+    def perform_destroy(self, instance):
+        if instance.author != self.request.user:
+            raise PermissionDenied("Вы не являетесь автором этого комментария")
+        instance.delete()

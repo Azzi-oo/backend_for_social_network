@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from general.models import User, Post
+from general.models import User, Post, Comment
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
@@ -132,4 +132,26 @@ class PostCreateUpdateSerializer(serializers.ModelSerializer):
             "author",
             "title",
             "body",
+        )
+
+
+class CommentSerializer(serializers.ModelSerializer):
+    author = serializers.HiddenField(
+        default=serializers.CurrentUserDefault(),
+    )
+
+    def get_fields(self):
+        fields = super().get_fields()
+        if self.context["request"].method == "GET":
+            fields["author"] = UserShortSerializer(read_only=True)
+        return fields
+    
+    class Meta:
+        model = Comment 
+        fields = (
+            "id",
+            "author",
+            "post",
+            "body",
+            "created_at",
         )
