@@ -1,7 +1,7 @@
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.mixins import CreateModelMixin, ListModelMixin, RetrieveModelMixin, DestroyModelMixin
-from general.api.serializers import UserRegistrationSerializer, UserListSerilizer, UserRetrieveSerializer, PostListSerializer, PostRetrieveSerializer, PostCreateUpdateSerializer, CommentSerializer, ReactionSerializer, ChatSerializer, MessageListSerializer, ChatListSerializer
-from general.models import User, Post, Comment
+from general.api.serializers import UserRegistrationSerializer, UserListSerilizer, UserRetrieveSerializer, PostListSerializer, PostRetrieveSerializer, PostCreateUpdateSerializer, CommentSerializer, ReactionSerializer, ChatSerializer, MessageListSerializer, ChatListSerializer, MessageSerializer
+from general.models import User, Post, Comment, Message
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.decorators import action
 from django.http import HttpResponse
